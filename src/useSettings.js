@@ -76,6 +76,13 @@ export default function useSettings() {
     return () => mq.removeEventListener('change', onChange);
   }, [settings.theme]);
 
+  // Apply accent palette via [data-accent] on <html> — CSS variables in
+  // index.css define the colour for each palette.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.dataset.accent = settings.accent;
+  }, [settings.accent]);
+
   const updateSetting = (key, value) =>
     setSettings(prev => ({ ...prev, [key]: value }));
 

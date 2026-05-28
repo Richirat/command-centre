@@ -64,7 +64,7 @@ const Card = ({ children, className = '', accent }) => (
   </div>
 );
 
-const KPICard = ({ label, value, sub, icon: Icon, accent = '#94a3b8' }) => (
+const KPICard = ({ label, value, sub, icon: Icon, accent = 'var(--accent)' }) => (
   <Card>
     <div className="flex items-start justify-between mb-3">
       <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-500 font-medium">{label}</span>
@@ -715,7 +715,7 @@ const OverviewTab = ({ tasks, revenue, today, fmt, density = 'comfortable' }) =>
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard label="Open Tasks" value={stats.open} icon={Activity} accent="#e8e8f0" sub={`${stats.done} completed`} />
+        <KPICard label="Open Tasks" value={stats.open} icon={Activity} accent="var(--accent)" sub={`${stats.done} completed`} />
         <KPICard label="This Week" value={stats.thisWeek} icon={Zap} accent="#5DADE2" sub={`${stats.hoursThisWeek}h estimated`} />
         <KPICard label="Overdue" value={stats.overdue} icon={AlertTriangle} accent={stats.overdue ? '#E74C3C' : '#52525b'} sub={stats.overdue ? 'action needed' : 'all on track'} />
         <KPICard label="Days to Viva" value={daysBetween(today, VIVA_DATE)} icon={Award} accent="#F1C40F" sub="approx. mid-Nov" />
@@ -872,7 +872,7 @@ export default function App() {
   }, [settings.numberLocale, settings.currency]);
 
   const tabs = [
-    { id: 'overview',        label: 'Overview',  icon: Layers,        color: '#e8e8f0' },
+    { id: 'overview',        label: 'Overview',  icon: Layers,        color: 'var(--accent)' },
     { id: '🔬 PhD',          label: 'PhD',       icon: FlaskConical,  color: AREA_META['🔬 PhD'].color },
     { id: '💼 P1 Freelance', label: 'Freelance', icon: Briefcase,     color: AREA_META['💼 P1 Freelance'].color },
     { id: '🖨️ P2 STL',      label: 'STL',       icon: Printer,       color: AREA_META['🖨️ P2 STL'].color },

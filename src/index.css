@@ -9,6 +9,38 @@
     font-family: 'Manrope', sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+
+  /* -------------------------------------------------------------------------
+   * Accent palette swap — controlled by [data-accent] on <html> via useSettings.
+   * Defaults to indigo. Designed to compose with the future Dark/Light theme
+   * swap (the alpha-blended --accent-soft / --accent-strong work on either
+   * background).
+   * ------------------------------------------------------------------------- */
+  :root {
+    --accent:        #6366f1;
+    --accent-soft:   rgba(99, 102, 241, 0.12);
+    --accent-strong: rgba(99, 102, 241, 0.35);
+  }
+  [data-accent="indigo"] {
+    --accent:        #6366f1;
+    --accent-soft:   rgba(99, 102, 241, 0.12);
+    --accent-strong: rgba(99, 102, 241, 0.35);
+  }
+  [data-accent="teal"] {
+    --accent:        #14b8a6;
+    --accent-soft:   rgba(20, 184, 166, 0.12);
+    --accent-strong: rgba(20, 184, 166, 0.35);
+  }
+  [data-accent="amber"] {
+    --accent:        #f59e0b;
+    --accent-soft:   rgba(245, 158, 11, 0.12);
+    --accent-strong: rgba(245, 158, 11, 0.35);
+  }
+  [data-accent="rose"] {
+    --accent:        #f43f5e;
+    --accent-soft:   rgba(244, 63, 94, 0.12);
+    --accent-strong: rgba(244, 63, 94, 0.35);
+  }
 }
 
 @layer utilities {
