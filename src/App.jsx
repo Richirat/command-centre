@@ -9,6 +9,8 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   ResponsiveContainer, Tooltip, ComposedChart, Line, CartesianGrid, Legend
 } from 'recharts';
+import useSettings from './useSettings.js';
+import SettingsPanel from './SettingsPanel.jsx';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -799,12 +801,14 @@ const ProjectTab = ({ area, tasks, today, insights }) => {
 // ============================================================================
 
 export default function App() {
+  const { settings, updateSetting, resetSettings } = useSettings();
   const [tasks, setTasks] = useState([]);
   const [revenue, setRevenue] = useState([]);
   const [syncedAt, setSyncedAt] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
 
@@ -863,6 +867,14 @@ export default function App() {
             >
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
               {loading ? 'Loading…' : 'Reload'}
+            </button>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="p-1.5 rounded border border-zinc-700 hover:border-zinc-500 text-zinc-300 transition-colors"
+              title="Settings"
+              aria-label="Open settings"
+            >
+              <Settings size={14} />
             </button>
           </div>
         </div>
@@ -931,6 +943,14 @@ export default function App() {
           {tasks.length} tasks · {revenue.length} months · Synced from Notion via GitHub Actions
         </div>
       </footer>
+
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        updateSetting={updateSetting}
+        resetSettings={resetSettings}
+      />
     </div>
   );
 }

@@ -20,7 +20,7 @@ import { useEffect, useState } from 'react';
 const STORAGE_KEY = 'command-centre-settings';
 
 export const DEFAULT_SETTINGS = {
-  theme: 'system',              // 'light' | 'dark' | 'system'
+  theme: 'dark',                // 'light' | 'dark' | 'system' (light/system enabled once Light styles land)
   accent: 'indigo',             // 'indigo' | 'teal' | 'amber' | 'rose'
   density: 'comfortable',       // 'comfortable' | 'compact' | 'focus'
   landingTab: 'overview',       // 'overview' | '🔬 PhD' | '💼 P1 Freelance' | ...
