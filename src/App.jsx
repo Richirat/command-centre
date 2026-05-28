@@ -245,7 +245,7 @@ const TimelineView = ({ tasks, today }) => {
 // PRIORITY LIST
 // ============================================================================
 
-const PriorityList = ({ tasks, today, limit = 10 }) => {
+const PriorityList = ({ tasks, today, limit = 10, density = 'comfortable' }) => {
   const sorted = useMemo(() => {
     return [...tasks]
       .filter(t => t.status !== '✅ Done')
@@ -264,8 +264,10 @@ const PriorityList = ({ tasks, today, limit = 10 }) => {
     return <div className="text-xs text-zinc-500 italic py-8 text-center">No open tasks.</div>;
   }
 
+  const compact = density === 'compact' || density === 'focus';
+
   return (
-    <div className="space-y-1.5">
+    <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
       {sorted.map((t, i) => {
         const meta = AREA_META[t.area];
         const overdue = isOverdue(t, today);
@@ -273,9 +275,9 @@ const PriorityList = ({ tasks, today, limit = 10 }) => {
         return (
           <div
             key={i}
-            className="flex items-center gap-3 rounded-md border border-zinc-800/60 bg-zinc-950/40 px-3 py-2 hover:border-zinc-700 transition-colors"
+            className={`flex items-center gap-3 rounded-md border border-zinc-800/60 bg-zinc-950/40 ${compact ? 'px-2 py-1' : 'px-3 py-2'} hover:border-zinc-700 transition-colors`}
           >
-            <div className="w-1 h-8 rounded" style={{ background: PRIORITY_META[t.priority]?.color || '#666' }} />
+            <div className={`w-1 ${compact ? 'h-6' : 'h-8'} rounded`} style={{ background: PRIORITY_META[t.priority]?.color || '#666' }} />
             <div className="flex-1 min-w-0">
               <div className="text-xs text-zinc-200 font-medium truncate">{t.task}</div>
               <div className="flex items-center gap-3 mt-0.5">
@@ -700,7 +702,7 @@ const PriorityHoursChart = ({ tasks }) => {
 // TAB COMPONENTS
 // ============================================================================
 
-const OverviewTab = ({ tasks, revenue, today, fmt }) => {
+const OverviewTab = ({ tasks, revenue, today, fmt, density = 'comfortable' }) => {
   const stats = useMemo(() => {
     const open = tasks.filter(t => t.status !== '✅ Done');
     const overdue = tasks.filter(t => isOverdue(t, today));
@@ -725,27 +727,31 @@ const OverviewTab = ({ tasks, revenue, today, fmt }) => {
         <div className="lg:col-span-2">
           <Card><SectionTitle>Calendar — Next 2 Months</SectionTitle><CalendarView tasks={tasks} today={today} /></Card>
         </div>
-        <Card><SectionTitle>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={8} /></Card>
+        <Card><SectionTitle>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={8} density={density} /></Card>
       </div>
 
-      <Card><SectionTitle>12-Week Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
+      {density !== 'focus' && (
+        <>
+          <Card><SectionTitle>12-Week Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card><SectionTitle>Status Mix</SectionTitle><StatusDonut tasks={tasks} /></Card>
-        <Card><SectionTitle>Tasks by Area</SectionTitle><AreaBar tasks={tasks} /></Card>
-        <Card><SectionTitle>Open Hours by Area</SectionTitle><HoursChart tasks={tasks} /></Card>
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card><SectionTitle>Status Mix</SectionTitle><StatusDonut tasks={tasks} /></Card>
+            <Card><SectionTitle>Tasks by Area</SectionTitle><AreaBar tasks={tasks} /></Card>
+            <Card><SectionTitle>Open Hours by Area</SectionTitle><HoursChart tasks={tasks} /></Card>
+          </div>
 
-      <Card>
-        <SectionTitle>Revenue Trajectory — June → October</SectionTitle>
-        <RevenueChart revenue={revenue} fmt={fmt} />
-        <div className="text-[10px] text-zinc-500 mt-2 italic">Dashed line = monthly target. Bars stack actuals by pillar.</div>
-      </Card>
+          <Card>
+            <SectionTitle>Revenue Trajectory — June → October</SectionTitle>
+            <RevenueChart revenue={revenue} fmt={fmt} />
+            <div className="text-[10px] text-zinc-500 mt-2 italic">Dashed line = monthly target. Bars stack actuals by pillar.</div>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
 
-const ProjectTab = ({ area, tasks, today, insights }) => {
+const ProjectTab = ({ area, tasks, today, insights, density = 'comfortable' }) => {
   const meta = AREA_META[area];
 
   const stats = useMemo(() => {
@@ -777,21 +783,25 @@ const ProjectTab = ({ area, tasks, today, insights }) => {
         <KPICard label="Completion" value={`${stats.pct}%`} icon={CheckCircle2} accent={meta.color} sub={`${stats.done} / ${tasks.length}`} />
       </div>
 
-      {insights}
+      {density !== 'focus' && insights}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card accent={meta.color}><SectionTitle accent={meta.color}>Calendar</SectionTitle><CalendarView tasks={tasks} today={today} /></Card>
         </div>
-        <Card accent={meta.color}><SectionTitle accent={meta.color}>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={10} /></Card>
+        <Card accent={meta.color}><SectionTitle accent={meta.color}>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={10} density={density} /></Card>
       </div>
 
-      <Card accent={meta.color}><SectionTitle accent={meta.color}>Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
+      {density !== 'focus' && (
+        <>
+          <Card accent={meta.color}><SectionTitle accent={meta.color}>Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card accent={meta.color}><SectionTitle accent={meta.color}>Status Distribution</SectionTitle><StatusDonut tasks={tasks} /></Card>
-        <Card accent={meta.color}><SectionTitle accent={meta.color}>Hours by Priority</SectionTitle><PriorityHoursChart tasks={tasks} /></Card>
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card accent={meta.color}><SectionTitle accent={meta.color}>Status Distribution</SectionTitle><StatusDonut tasks={tasks} /></Card>
+            <Card accent={meta.color}><SectionTitle accent={meta.color}>Hours by Priority</SectionTitle><PriorityHoursChart tasks={tasks} /></Card>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -943,25 +953,25 @@ export default function App() {
       )}
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        {activeTab === 'overview' && <OverviewTab tasks={visibleTasks} revenue={revenue} today={today} fmt={fmt} />}
+        {activeTab === 'overview' && <OverviewTab tasks={visibleTasks} revenue={revenue} today={today} fmt={fmt} density={settings.density} />}
         {activeTab === '🔬 PhD' && (
-          <ProjectTab area="🔬 PhD" tasks={filterArea('🔬 PhD')} today={today}
+          <ProjectTab area="🔬 PhD" tasks={filterArea('🔬 PhD')} today={today} density={settings.density}
             insights={<PhdInsights tasks={filterArea('🔬 PhD')} today={today} />} />
         )}
         {activeTab === '💼 P1 Freelance' && (
-          <ProjectTab area="💼 P1 Freelance" tasks={filterArea('💼 P1 Freelance')} today={today}
+          <ProjectTab area="💼 P1 Freelance" tasks={filterArea('💼 P1 Freelance')} today={today} density={settings.density}
             insights={<FreelanceInsights tasks={filterArea('💼 P1 Freelance')} revenue={revenue} fmt={fmt} />} />
         )}
         {activeTab === '🖨️ P2 STL' && (
-          <ProjectTab area="🖨️ P2 STL" tasks={filterArea('🖨️ P2 STL')} today={today}
+          <ProjectTab area="🖨️ P2 STL" tasks={filterArea('🖨️ P2 STL')} today={today} density={settings.density}
             insights={<StlInsights tasks={filterArea('🖨️ P2 STL')} revenue={revenue} fmt={fmt} />} />
         )}
         {activeTab === '🛍️ P3 POD' && (
-          <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today}
+          <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today} density={settings.density}
             insights={<PodInsights tasks={filterArea('🛍️ P3 POD')} revenue={revenue} />} />
         )}
         {activeTab === '⚙️ Admin' && (
-          <ProjectTab area="⚙️ Admin" tasks={filterArea('⚙️ Admin')} today={today}
+          <ProjectTab area="⚙️ Admin" tasks={filterArea('⚙️ Admin')} today={today} density={settings.density}
             insights={<AdminInsights tasks={filterArea('⚙️ Admin')} />} />
         )}
       </main>
