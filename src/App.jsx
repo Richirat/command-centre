@@ -833,6 +833,13 @@ export default function App() {
 
   useEffect(() => { loadData(); }, []);
 
+  // Apply the "hide completed" preference at the top level so every tab,
+  // chart and stat sees a single consistent view of the task list.
+  const visibleTasks = useMemo(
+    () => settings.hideCompleted ? tasks.filter(t => t.status !== '✅ Done') : tasks,
+    [tasks, settings.hideCompleted]
+  );
+
   const tabs = [
     { id: 'overview',        label: 'Overview',  icon: Layers,        color: '#e8e8f0' },
     { id: '🔬 PhD',          label: 'PhD',       icon: FlaskConical,  color: AREA_META['🔬 PhD'].color },
@@ -842,7 +849,7 @@ export default function App() {
     { id: '⚙️ Admin',        label: 'Admin',     icon: Settings,      color: AREA_META['⚙️ Admin'].color },
   ];
 
-  const filterArea = (area) => tasks.filter(t => t.area === area);
+  const filterArea = (area) => visibleTasks.filter(t => t.area === area);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -915,7 +922,7 @@ export default function App() {
       )}
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        {activeTab === 'overview' && <OverviewTab tasks={tasks} revenue={revenue} today={today} />}
+        {activeTab === 'overview' && <OverviewTab tasks={visibleTasks} revenue={revenue} today={today} />}
         {activeTab === '🔬 PhD' && (
           <ProjectTab area="🔬 PhD" tasks={filterArea('🔬 PhD')} today={today}
             insights={<PhdInsights tasks={filterArea('🔬 PhD')} today={today} />} />
