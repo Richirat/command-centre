@@ -833,6 +833,16 @@ export default function App() {
 
   useEffect(() => { loadData(); }, []);
 
+  // Optional auto-refresh: re-fetch data.json on a timer.
+  // The Notion sync itself is hourly via GitHub Actions; this just keeps the
+  // open browser tab in step with the latest published data.json.
+  useEffect(() => {
+    if (!settings.autoRefresh) return;
+    const minutes = Math.max(1, settings.autoRefreshMinutes || 15);
+    const id = setInterval(() => { loadData(); }, minutes * 60 * 1000);
+    return () => clearInterval(id);
+  }, [settings.autoRefresh, settings.autoRefreshMinutes]);
+
   // Apply the "hide completed" preference at the top level so every tab,
   // chart and stat sees a single consistent view of the task list.
   const visibleTasks = useMemo(
