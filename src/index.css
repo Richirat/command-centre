@@ -4,17 +4,15 @@
 
 @layer base {
   html, body {
-    background: #09090b;
-    color: #e8e8f0;
     font-family: 'Manrope', sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+  html { color-scheme: light dark; }
 
   /* -------------------------------------------------------------------------
    * Accent palette swap — controlled by [data-accent] on <html> via useSettings.
-   * Defaults to indigo. Designed to compose with the future Dark/Light theme
-   * swap (the alpha-blended --accent-soft / --accent-strong work on either
-   * background).
+   * Defaults to indigo. Designed to compose with light + dark themes (the
+   * alpha-blended --accent-soft / --accent-strong work on either background).
    * ------------------------------------------------------------------------- */
   :root {
     --accent:        #6366f1;
@@ -49,8 +47,11 @@
   .font-mono    { font-family: 'JetBrains Mono', monospace; }
 }
 
-/* Scrollbar polish */
+/* Scrollbar polish — theme-aware via the .dark class on <html>. */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #09090b; }
-::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+::-webkit-scrollbar-track { background: #fafafa; }
+::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+.dark ::-webkit-scrollbar-track { background: #09090b; }
+.dark ::-webkit-scrollbar-thumb { background: #27272a; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }

@@ -51,13 +51,53 @@ const formatDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month:
 const isOverdue = (t, today) => t.status !== '✅ Done' && t.dueDate && new Date(t.dueDate) < today;
 const isDueThisWeek = (t) => t.week === 'This Week' && t.status !== '✅ Done';
 
+// Track the effective theme (the html.dark class) — used so recharts hex
+// literals can swap with the theme without a full Tailwind utility refactor
+// of every chart prop.
+const useEffectiveTheme = () => {
+  const get = () =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+      ? 'dark'
+      : 'light';
+  const [theme, setTheme] = useState(get);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const obs = new MutationObserver(() => setTheme(get()));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+  return theme;
+};
+
+const CHART_LIGHT = {
+  grid:          '#e4e4e7',
+  axisStroke:    '#a1a1aa',
+  textStroke:    '#52525b',
+  textLabel:     '#3f3f46',
+  tooltipBg:     '#ffffff',
+  tooltipBorder: '#e4e4e7',
+  cursorFill:    'rgba(0,0,0,0.04)',
+  dashLine:      '#a1a1aa',
+};
+const CHART_DARK = {
+  grid:          '#27272a',
+  axisStroke:    '#52525b',
+  textStroke:    '#71717a',
+  textLabel:     '#a1a1aa',
+  tooltipBg:     '#0a0a0c',
+  tooltipBorder: '#2a2a35',
+  cursorFill:    'rgba(255,255,255,0.04)',
+  dashLine:      '#71717a',
+};
+const useChartPalette = () => (useEffectiveTheme() === 'dark' ? CHART_DARK : CHART_LIGHT);
+
 // ============================================================================
 // PRIMITIVES
 // ============================================================================
 
 const Card = ({ children, className = '', accent }) => (
   <div
-    className={`rounded-lg border border-zinc-800/80 bg-zinc-950/40 backdrop-blur-sm p-5 ${className}`}
+    className={`rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-zinc-950/40 backdrop-blur-sm p-5 ${className}`}
     style={accent ? { borderLeftColor: accent, borderLeftWidth: '2px' } : {}}
   >
     {children}
@@ -78,8 +118,8 @@ const KPICard = ({ label, value, sub, icon: Icon, accent = 'var(--accent)' }) =>
 const SectionTitle = ({ children, accent }) => (
   <div className="flex items-baseline gap-3 mb-4">
     <div className="h-px flex-shrink-0 w-6" style={{ background: accent || '#52525b' }} />
-    <h3 className="text-[11px] uppercase tracking-[0.22em] text-zinc-400 font-semibold">{children}</h3>
-    <div className="h-px flex-1 bg-zinc-800" />
+    <h3 className="text-[11px] uppercase tracking-[0.22em] text-zinc-600 dark:text-zinc-400 font-semibold">{children}</h3>
+    <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
   </div>
 );
 
@@ -107,12 +147,12 @@ const CalendarView = ({ tasks, today }) => {
 
     return (
       <div className="flex-1 min-w-0">
-        <div className="font-display text-xl text-zinc-200 mb-3">
+        <div className="font-display text-xl text-zinc-800 dark:text-zinc-200 mb-3">
           {mStart.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
         </div>
         <div className="grid grid-cols-7 gap-1 mb-1">
           {['M','T','W','T','F','S','S'].map((d,i) => (
-            <div key={i} className="text-[9px] uppercase tracking-widest text-zinc-600 text-center py-1 font-medium">{d}</div>
+            <div key={i} className="text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600 text-center py-1 font-medium">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">
@@ -128,11 +168,11 @@ const CalendarView = ({ tasks, today }) => {
                   isToday
                     ? 'bg-amber-500/10 border-amber-500/40'
                     : dayTasks.length
-                      ? 'bg-zinc-900/60 border-zinc-700/50'
-                      : 'bg-zinc-950/30 border-zinc-800/40'
-                } hover:border-zinc-600 transition-colors`}
+                      ? 'bg-zinc-100/60 dark:bg-zinc-900/60 border-zinc-300/50 dark:border-zinc-700/50'
+                      : 'bg-zinc-50/30 dark:bg-zinc-950/30 border-zinc-200/40 dark:border-zinc-800/40'
+                } hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors`}
               >
-                <div className={`text-[10px] font-mono ${isToday ? 'text-amber-400 font-bold' : 'text-zinc-500'}`}>
+                <div className={`text-[10px] font-mono ${isToday ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-zinc-500'}`}>
                   {day}
                 </div>
                 <div className="flex-1 flex flex-wrap gap-0.5 mt-1 content-start">
@@ -205,7 +245,7 @@ const TimelineView = ({ tasks, today }) => {
         <div className="grid gap-1 mb-2" style={{ gridTemplateColumns: `90px repeat(12, 1fr)` }}>
           <div />
           {weeks.map(w => (
-            <div key={w.idx} className="text-[9px] text-zinc-600 font-mono text-center">
+            <div key={w.idx} className="text-[9px] text-zinc-400 dark:text-zinc-600 font-mono text-center">
               {formatDate(w.start)}
             </div>
           ))}
@@ -215,13 +255,13 @@ const TimelineView = ({ tasks, today }) => {
           const Icon = meta.icon;
           return (
             <div key={area} className="grid gap-1 mb-1 items-center" style={{ gridTemplateColumns: `90px repeat(12, 1fr)` }}>
-              <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+              <div className="flex items-center gap-1.5 text-[10px] text-zinc-600 dark:text-zinc-400">
                 <Icon size={10} style={{ color: meta.color }} />
                 <span className="font-medium">{meta.label}</span>
               </div>
               {weeks.map(w => {
                 const wt = byArea[area].filter(t => t.weekIdx === w.idx);
-                if (!wt.length) return <div key={w.idx} className="h-6 rounded bg-zinc-950/30 border border-zinc-900" />;
+                if (!wt.length) return <div key={w.idx} className="h-6 rounded bg-zinc-50/30 dark:bg-zinc-950/30 border border-zinc-100 dark:border-zinc-900" />;
                 return (
                   <div
                     key={w.idx}
@@ -275,26 +315,26 @@ const PriorityList = ({ tasks, today, limit = 10, density = 'comfortable' }) => 
         return (
           <div
             key={i}
-            className={`flex items-center gap-3 rounded-md border border-zinc-800/60 bg-zinc-950/40 ${compact ? 'px-2 py-1' : 'px-3 py-2'} hover:border-zinc-700 transition-colors`}
+            className={`flex items-center gap-3 rounded-md border border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-50/40 dark:bg-zinc-950/40 ${compact ? 'px-2 py-1' : 'px-3 py-2'} hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors`}
           >
             <div className={`w-1 ${compact ? 'h-6' : 'h-8'} rounded`} style={{ background: PRIORITY_META[t.priority]?.color || '#666' }} />
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-zinc-200 font-medium truncate">{t.task}</div>
+              <div className="text-xs text-zinc-800 dark:text-zinc-200 font-medium truncate">{t.task}</div>
               <div className="flex items-center gap-3 mt-0.5">
                 <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: meta?.color }}>
                   {meta?.label || '—'}
                 </span>
                 {days !== null && (
-                  <span className={`text-[10px] font-mono ${overdue ? 'text-red-400' : 'text-zinc-500'}`}>
+                  <span className={`text-[10px] font-mono ${overdue ? 'text-red-600 dark:text-red-400' : 'text-zinc-500'}`}>
                     {overdue ? `${Math.abs(days)}d overdue` : days === 0 ? 'today' : `in ${days}d`}
                   </span>
                 )}
                 {t.timeEst != null && (
-                  <span className="text-[10px] font-mono text-zinc-600">{t.timeEst}h</span>
+                  <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-600">{t.timeEst}h</span>
                 )}
               </div>
             </div>
-            <ChevronRight size={14} className="text-zinc-700" />
+            <ChevronRight size={14} className="text-zinc-300 dark:text-zinc-700" />
           </div>
         );
       })}
@@ -307,6 +347,7 @@ const PriorityList = ({ tasks, today, limit = 10, density = 'comfortable' }) => 
 // ============================================================================
 
 const StatusDonut = ({ tasks }) => {
+  const C = useChartPalette();
   const data = useMemo(() => {
     const counts = {};
     tasks.forEach(t => { counts[t.status] = (counts[t.status] || 0) + 1; });
@@ -330,11 +371,11 @@ const StatusDonut = ({ tasks }) => {
           <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={2} dataKey="value" stroke="none">
             {data.map((e, i) => <Cell key={i} fill={e.color} />)}
           </Pie>
-          <Tooltip contentStyle={{ background: '#0a0a0c', border: '1px solid #2a2a35', borderRadius: 6, fontSize: 11 }} />
+          <Tooltip contentStyle={{ background: C.tooltipBg, border: `1px solid ${C.tooltipBorder}`, borderRadius: 6, fontSize: 11 }} />
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <div className="font-display text-3xl text-zinc-100">{pct}%</div>
+        <div className="font-display text-3xl text-zinc-900 dark:text-zinc-100">{pct}%</div>
         <div className="text-[10px] uppercase tracking-widest text-zinc-500">complete</div>
       </div>
     </div>
@@ -342,6 +383,7 @@ const StatusDonut = ({ tasks }) => {
 };
 
 const AreaBar = ({ tasks }) => {
+  const C = useChartPalette();
   const data = useMemo(() => {
     const m = {};
     tasks.forEach(t => {
@@ -356,10 +398,10 @@ const AreaBar = ({ tasks }) => {
   return (
     <ResponsiveContainer width="100%" height={192}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 4 }}>
-        <CartesianGrid horizontal={false} stroke="#27272a" />
-        <XAxis type="number" stroke="#52525b" fontSize={10} tickLine={false} />
-        <YAxis type="category" dataKey="area" stroke="#a1a1aa" fontSize={10} tickLine={false} axisLine={false} width={70} />
-        <Tooltip contentStyle={{ background: '#0a0a0c', border: '1px solid #2a2a35', borderRadius: 6, fontSize: 11 }} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+        <CartesianGrid horizontal={false} stroke={C.grid} />
+        <XAxis type="number" stroke={C.axisStroke} fontSize={10} tickLine={false} />
+        <YAxis type="category" dataKey="area" stroke={C.textLabel} fontSize={10} tickLine={false} axisLine={false} width={70} />
+        <Tooltip contentStyle={{ background: C.tooltipBg, border: `1px solid ${C.tooltipBorder}`, borderRadius: 6, fontSize: 11 }} cursor={{ fill: C.cursorFill }} />
         <Bar dataKey="total" radius={[0, 3, 3, 0]}>
           {data.map((e, i) => <Cell key={i} fill={e.color} fillOpacity={0.85} />)}
         </Bar>
@@ -369,6 +411,7 @@ const AreaBar = ({ tasks }) => {
 };
 
 const HoursChart = ({ tasks }) => {
+  const C = useChartPalette();
   const data = useMemo(() => {
     const m = {};
     Object.keys(AREA_META).forEach(a => { m[a] = { area: AREA_META[a].label, hours: 0, color: AREA_META[a].color }; });
@@ -383,10 +426,10 @@ const HoursChart = ({ tasks }) => {
   return (
     <ResponsiveContainer width="100%" height={192}>
       <BarChart data={data} margin={{ top: 12, right: 8, bottom: 4, left: -16 }}>
-        <CartesianGrid vertical={false} stroke="#27272a" />
-        <XAxis dataKey="area" stroke="#52525b" fontSize={9} tickLine={false} />
-        <YAxis stroke="#52525b" fontSize={9} tickLine={false} />
-        <Tooltip contentStyle={{ background: '#0a0a0c', border: '1px solid #2a2a35', borderRadius: 6, fontSize: 11 }} cursor={{ fill: 'rgba(255,255,255,0.04)' }} formatter={(v) => [`${v}h`, 'Estimated']} />
+        <CartesianGrid vertical={false} stroke={C.grid} />
+        <XAxis dataKey="area" stroke={C.axisStroke} fontSize={9} tickLine={false} />
+        <YAxis stroke={C.axisStroke} fontSize={9} tickLine={false} />
+        <Tooltip contentStyle={{ background: C.tooltipBg, border: `1px solid ${C.tooltipBorder}`, borderRadius: 6, fontSize: 11 }} cursor={{ fill: C.cursorFill }} formatter={(v) => [`${v}h`, 'Estimated']} />
         <Bar dataKey="hours" radius={[3, 3, 0, 0]}>
           {data.map((e, i) => <Cell key={i} fill={e.color} fillOpacity={0.7} />)}
         </Bar>
@@ -396,6 +439,7 @@ const HoursChart = ({ tasks }) => {
 };
 
 const RevenueChart = ({ revenue, fmt = (v) => `£${v}` }) => {
+  const C = useChartPalette();
   const data = (revenue || []).map(r => ({
     month: r.month?.split(' ')[0].slice(0, 3) || '?',
     Target: r.target || 0,
@@ -409,15 +453,15 @@ const RevenueChart = ({ revenue, fmt = (v) => `£${v}` }) => {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <ComposedChart data={data} margin={{ top: 16, right: 8, bottom: 4, left: -8 }}>
-        <CartesianGrid vertical={false} stroke="#27272a" />
-        <XAxis dataKey="month" stroke="#71717a" fontSize={10} tickLine={false} />
-        <YAxis stroke="#52525b" fontSize={10} tickLine={false} tickFormatter={(v) => fmt(v)} />
-        <Tooltip contentStyle={{ background: '#0a0a0c', border: '1px solid #2a2a35', borderRadius: 6, fontSize: 11 }} cursor={{ fill: 'rgba(255,255,255,0.04)' }} formatter={(v) => [fmt(v), '']} />
+        <CartesianGrid vertical={false} stroke={C.grid} />
+        <XAxis dataKey="month" stroke={C.textStroke} fontSize={10} tickLine={false} />
+        <YAxis stroke={C.axisStroke} fontSize={10} tickLine={false} tickFormatter={(v) => fmt(v)} />
+        <Tooltip contentStyle={{ background: C.tooltipBg, border: `1px solid ${C.tooltipBorder}`, borderRadius: 6, fontSize: 11 }} cursor={{ fill: C.cursorFill }} formatter={(v) => [fmt(v), '']} />
         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
         <Bar dataKey="Freelance" stackId="a" fill="#BB8FCE" />
         <Bar dataKey="STL"       stackId="a" fill="#F39C12" />
         <Bar dataKey="POD"       stackId="a" fill="#EC7063" radius={[3, 3, 0, 0]} />
-        <Line dataKey="Target" stroke="#71717a" strokeDasharray="4 4" strokeWidth={1.5} dot={false} />
+        <Line dataKey="Target" stroke={C.dashLine} strokeDasharray="4 4" strokeWidth={1.5} dot={false} />
       </ComposedChart>
     </ResponsiveContainer>
   );
@@ -451,22 +495,22 @@ const PhdPhaseStrip = ({ today }) => {
           <div
             key={p.id}
             className={`flex-1 rounded p-2.5 border transition-all ${
-              isCurrent ? 'bg-blue-500/10 border-blue-400/50' :
-              isPast    ? 'bg-zinc-900/40 border-zinc-800/50 opacity-50' :
-                          'bg-zinc-950/30 border-zinc-800/40 opacity-60'
+              isCurrent ? 'bg-blue-500/10 border-blue-600/50 dark:border-blue-400/50' :
+              isPast    ? 'bg-zinc-100/40 dark:bg-zinc-900/40 border-zinc-200/50 dark:border-zinc-800/50 opacity-50' :
+                          'bg-zinc-50/30 dark:bg-zinc-950/30 border-zinc-200/40 dark:border-zinc-800/40 opacity-60'
             }`}
           >
-            <div className={`text-[9px] uppercase tracking-widest font-semibold ${isCurrent ? 'text-blue-300' : 'text-zinc-500'}`}>
+            <div className={`text-[9px] uppercase tracking-widest font-semibold ${isCurrent ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-500'}`}>
               Phase {i + 1}
             </div>
-            <div className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-zinc-100' : 'text-zinc-400'}`}>
+            <div className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400'}`}>
               {p.label}
             </div>
             <div className="text-[10px] text-zinc-500 font-mono mt-1">
               {formatDate(new Date(p.start))} → {formatDate(e)}
             </div>
             {isCurrent && (
-              <div className="text-[10px] text-blue-300 font-mono mt-1 flex items-center gap-1">
+              <div className="text-[10px] text-blue-700 dark:text-blue-300 font-mono mt-1 flex items-center gap-1">
                 <Flame size={9} /> {daysLeft}d left
               </div>
             )}
@@ -492,37 +536,37 @@ const PhdInsights = ({ tasks, today }) => {
     <Card accent="#5DADE2">
       <SectionTitle accent="#5DADE2">PhD Insights</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded border border-red-500/30 bg-red-950/20 p-4">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-red-400 font-semibold">
+        <div className="rounded border border-red-500/30 bg-red-50/20 dark:bg-red-950/20 p-4">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-red-600 dark:text-red-400 font-semibold">
             <Flame size={12} /> Build Deadline
           </div>
-          <div className="font-display text-4xl text-red-300 mt-2">{Math.max(0, daysToBuild)}d</div>
-          <div className="text-xs text-zinc-400 mt-1">{buildPct}% complete · {buildTasks.length - buildDone} tasks left</div>
-          <div className="h-1.5 bg-zinc-800 rounded-full mt-3 overflow-hidden">
-            <div className="h-full bg-red-400 transition-all" style={{ width: `${buildPct}%` }} />
+          <div className="font-display text-4xl text-red-700 dark:text-red-300 mt-2">{Math.max(0, daysToBuild)}d</div>
+          <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{buildPct}% complete · {buildTasks.length - buildDone} tasks left</div>
+          <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
+            <div className="h-full bg-red-600 dark:bg-red-400 transition-all" style={{ width: `${buildPct}%` }} />
           </div>
         </div>
-        <div className="rounded border border-amber-500/30 bg-amber-950/20 p-4">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-amber-400 font-semibold">
+        <div className="rounded border border-amber-500/30 bg-amber-50/20 dark:bg-amber-950/20 p-4">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-amber-600 dark:text-amber-400 font-semibold">
             <Award size={12} /> Viva
           </div>
-          <div className="font-display text-4xl text-amber-300 mt-2">{daysToViva}d</div>
-          <div className="text-xs text-zinc-400 mt-1">approx. mid-November 2026</div>
+          <div className="font-display text-4xl text-amber-700 dark:text-amber-300 mt-2">{daysToViva}d</div>
+          <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">approx. mid-November 2026</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">
             ~{Math.round(daysToViva / 7)} weeks · {Math.round(daysToViva / 30)} months
           </div>
         </div>
-        <div className="rounded border border-blue-500/30 bg-blue-950/20 p-4">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-blue-400 font-semibold">
+        <div className="rounded border border-blue-500/30 bg-blue-50/20 dark:bg-blue-950/20 p-4">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 font-semibold">
             <GitBranch size={12} /> Pipeline Backlog
           </div>
-          <div className="text-xs text-zinc-300 mt-3 space-y-1">
+          <div className="text-xs text-zinc-700 dark:text-zinc-300 mt-3 space-y-1">
             <div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-zinc-500" /> ΔF/F computation</div>
             <div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-zinc-500" /> 2D place field binning</div>
             <div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-zinc-500" /> Spatial info (Skaggs)</div>
             <div className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-zinc-500" /> Cross-session tracking</div>
           </div>
-          <div className="text-[10px] text-blue-400 mt-3 font-mono">Use surgery recovery window</div>
+          <div className="text-[10px] text-blue-600 dark:text-blue-400 mt-3 font-mono">Use surgery recovery window</div>
         </div>
       </div>
     </Card>
@@ -539,24 +583,24 @@ const FreelanceInsights = ({ tasks, revenue, fmt = (v) => `£${v}` }) => {
     <Card accent="#BB8FCE">
       <SectionTitle accent="#BB8FCE">Freelance Insights</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded border border-purple-500/30 bg-purple-950/20 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-purple-300 font-semibold">Platform Launch</div>
-          <div className="font-display text-4xl text-purple-200 mt-2">{setupPct}%</div>
-          <div className="text-xs text-zinc-400 mt-1">{setupDone}/{tasks.length} setup tasks done</div>
-          <div className="h-1.5 bg-zinc-800 rounded-full mt-3 overflow-hidden">
-            <div className="h-full bg-purple-400 transition-all" style={{ width: `${setupPct}%` }} />
+        <div className="rounded border border-purple-500/30 bg-purple-50/20 dark:bg-purple-950/20 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-purple-700 dark:text-purple-300 font-semibold">Platform Launch</div>
+          <div className="font-display text-4xl text-purple-800 dark:text-purple-200 mt-2">{setupPct}%</div>
+          <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{setupDone}/{tasks.length} setup tasks done</div>
+          <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
+            <div className="h-full bg-purple-600 dark:bg-purple-400 transition-all" style={{ width: `${setupPct}%` }} />
           </div>
           <div className="text-[10px] text-zinc-500 mt-2 font-mono">Target: live by Jun 7</div>
         </div>
-        <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Revenue Progress</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">{fmt(totalRevenue)}</div>
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Revenue Progress</div>
+          <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{fmt(totalRevenue)}</div>
           <div className="text-xs text-zinc-500 mt-1">of {fmt(1500)}/mo target</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">{totalProposals} proposals sent total</div>
         </div>
-        <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Rate Targets</div>
-          <div className="font-display text-3xl text-zinc-100 mt-2">{fmt(55)} → {fmt(85)}</div>
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Rate Targets</div>
+          <div className="font-display text-3xl text-zinc-900 dark:text-zinc-100 mt-2">{fmt(55)} → {fmt(85)}</div>
           <div className="text-xs text-zinc-500 mt-1">starting → target hourly</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Convert to retainers ASAP</div>
         </div>
@@ -576,23 +620,23 @@ const StlInsights = ({ tasks, revenue, fmt = (v) => `£${v}` }) => {
     <Card accent="#F39C12">
       <SectionTitle accent="#F39C12">STL Insights</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded border border-orange-500/30 bg-orange-950/20 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-orange-300 font-semibold">Platform Setup</div>
-          <div className="font-display text-4xl text-orange-200 mt-2">{setupPct}%</div>
-          <div className="text-xs text-zinc-400 mt-1">Cults3D · MyMiniFactory</div>
-          <div className="h-1.5 bg-zinc-800 rounded-full mt-3 overflow-hidden">
-            <div className="h-full bg-orange-400 transition-all" style={{ width: `${setupPct}%` }} />
+        <div className="rounded border border-orange-500/30 bg-orange-50/20 dark:bg-orange-950/20 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-orange-700 dark:text-orange-300 font-semibold">Platform Setup</div>
+          <div className="font-display text-4xl text-orange-800 dark:text-orange-200 mt-2">{setupPct}%</div>
+          <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">Cults3D · MyMiniFactory</div>
+          <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
+            <div className="h-full bg-orange-600 dark:bg-orange-400 transition-all" style={{ width: `${setupPct}%` }} />
           </div>
         </div>
-        <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Catalogue</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">{totalDesigns}</div>
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Catalogue</div>
+          <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{totalDesigns}</div>
           <div className="text-xs text-zinc-500 mt-1">designs published</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Target: 2–3 / week</div>
         </div>
-        <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Revenue Density</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">{revPerDesign != null ? fmt(revPerDesign) : '—'}</div>
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Revenue Density</div>
+          <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{revPerDesign != null ? fmt(revPerDesign) : '—'}</div>
           <div className="text-xs text-zinc-500 mt-1">per design (cumulative)</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Goal: {fmt(400)}/mo passive</div>
         </div>
@@ -610,23 +654,23 @@ const PodInsights = ({ tasks, revenue }) => {
     <Card accent="#EC7063">
       <SectionTitle accent="#EC7063">POD Insights</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded border border-rose-500/30 bg-rose-950/20 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-rose-300 font-semibold">Platform Setup</div>
-          <div className="font-display text-4xl text-rose-200 mt-2">{setupPct}%</div>
-          <div className="text-xs text-zinc-400 mt-1">Etsy · Printify · EverBee</div>
-          <div className="h-1.5 bg-zinc-800 rounded-full mt-3 overflow-hidden">
-            <div className="h-full bg-rose-400 transition-all" style={{ width: `${setupPct}%` }} />
+        <div className="rounded border border-rose-500/30 bg-rose-50/20 dark:bg-rose-950/20 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-rose-700 dark:text-rose-300 font-semibold">Platform Setup</div>
+          <div className="font-display text-4xl text-rose-800 dark:text-rose-200 mt-2">{setupPct}%</div>
+          <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">Etsy · Printify · EverBee</div>
+          <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
+            <div className="h-full bg-rose-600 dark:bg-rose-400 transition-all" style={{ width: `${setupPct}%` }} />
           </div>
         </div>
-        <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Listings</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">{totalListings}</div>
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Listings</div>
+          <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{totalListings}</div>
           <div className="text-xs text-zinc-500 mt-1">live on Etsy</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Target: 3–5 / week</div>
         </div>
-        <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Niche Priority</div>
-          <div className="font-display text-xl text-zinc-100 mt-2">Lab humour</div>
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Niche Priority</div>
+          <div className="font-display text-xl text-zinc-900 dark:text-zinc-100 mt-2">Lab humour</div>
           <div className="text-xs text-zinc-500 mt-1">highest conversion first</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Then sci art → geometric</div>
         </div>
@@ -643,23 +687,23 @@ const AdminInsights = ({ tasks }) => {
     <Card accent="#95A5A6">
       <SectionTitle accent="#95A5A6">Compliance & Tooling</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded border border-zinc-600 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Compliance</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">{setupPct}%</div>
+        <div className="rounded border border-zinc-400 dark:border-zinc-600 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Compliance</div>
+          <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{setupPct}%</div>
           <div className="text-xs text-zinc-500 mt-1">HMRC · tax account · Wave</div>
-          <div className="h-1.5 bg-zinc-800 rounded-full mt-3 overflow-hidden">
-            <div className="h-full bg-zinc-400 transition-all" style={{ width: `${setupPct}%` }} />
+          <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
+            <div className="h-full bg-zinc-600 dark:bg-zinc-400 transition-all" style={{ width: `${setupPct}%` }} />
           </div>
         </div>
-        <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Tax Buffer</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">25%</div>
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Tax Buffer</div>
+          <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">25%</div>
           <div className="text-xs text-zinc-500 mt-1">of freelance income</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Set aside from day 1</div>
         </div>
-        <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Friday Review</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">30m</div>
+        <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Friday Review</div>
+          <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">30m</div>
           <div className="text-xs text-zinc-500 mt-1">weekly admin time</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Invoicing · Toggl · summary</div>
         </div>
@@ -669,6 +713,7 @@ const AdminInsights = ({ tasks }) => {
 };
 
 const PriorityHoursChart = ({ tasks }) => {
+  const C = useChartPalette();
   const data = useMemo(() => {
     const m = { '🔴 High': 0, '🟡 Medium': 0, '🟢 Low': 0 };
     tasks.filter(t => t.status !== '✅ Done').forEach(t => {
@@ -686,10 +731,10 @@ const PriorityHoursChart = ({ tasks }) => {
   return (
     <ResponsiveContainer width="100%" height={192}>
       <BarChart data={data} margin={{ top: 16, right: 8, bottom: 4, left: -16 }}>
-        <CartesianGrid vertical={false} stroke="#27272a" />
-        <XAxis dataKey="priority" stroke="#71717a" fontSize={10} tickLine={false} />
-        <YAxis stroke="#52525b" fontSize={10} tickLine={false} />
-        <Tooltip contentStyle={{ background: '#0a0a0c', border: '1px solid #2a2a35', borderRadius: 6, fontSize: 11 }} cursor={{ fill: 'rgba(255,255,255,0.04)' }} formatter={(v) => [`${v}h`, '']} />
+        <CartesianGrid vertical={false} stroke={C.grid} />
+        <XAxis dataKey="priority" stroke={C.textStroke} fontSize={10} tickLine={false} />
+        <YAxis stroke={C.axisStroke} fontSize={10} tickLine={false} />
+        <Tooltip contentStyle={{ background: C.tooltipBg, border: `1px solid ${C.tooltipBorder}`, borderRadius: 6, fontSize: 11 }} cursor={{ fill: C.cursorFill }} formatter={(v) => [`${v}h`, '']} />
         <Bar dataKey="hours" radius={[3, 3, 0, 0]}>
           {data.map((e, i) => <Cell key={i} fill={e.color} fillOpacity={0.85} />)}
         </Bar>
@@ -767,7 +812,7 @@ const ProjectTab = ({ area, tasks, today, insights, density = 'comfortable' }) =
     return (
       <Card>
         <div className="py-12 text-center">
-          <meta.icon size={32} className="mx-auto mb-3 text-zinc-700" />
+          <meta.icon size={32} className="mx-auto mb-3 text-zinc-300 dark:text-zinc-700" />
           <div className="text-zinc-500">No tasks yet for {meta.label}.</div>
         </div>
       </Card>
@@ -883,12 +928,12 @@ export default function App() {
   const filterArea = (area) => visibleTasks.filter(t => t.area === area);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       {/* Header */}
-      <header className="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur sticky top-0 z-10">
+      <header className="border-b border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-baseline gap-4">
-            <h1 className="font-display text-3xl italic text-zinc-100">Command Centre</h1>
+            <h1 className="font-display text-3xl italic text-zinc-900 dark:text-zinc-100">Command Centre</h1>
             <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-mono">PhD · Income · Admin</span>
           </div>
           <div className="flex items-center gap-3">
@@ -900,7 +945,7 @@ export default function App() {
             <button
               onClick={loadData}
               disabled={loading}
-              className="flex items-center gap-2 px-3 py-1.5 rounded border border-zinc-700 hover:border-zinc-500 text-xs text-zinc-300 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1.5 rounded border border-zinc-300 dark:border-zinc-700 hover:border-zinc-500 text-xs text-zinc-700 dark:text-zinc-300 transition-colors disabled:opacity-50"
               title="Reload from data.json (does NOT trigger a Notion sync — for that, run the GitHub Action)"
             >
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
@@ -908,7 +953,7 @@ export default function App() {
             </button>
             <button
               onClick={() => setSettingsOpen(true)}
-              className="p-1.5 rounded border border-zinc-700 hover:border-zinc-500 text-zinc-300 transition-colors"
+              className="p-1.5 rounded border border-zinc-300 dark:border-zinc-700 hover:border-zinc-500 text-zinc-700 dark:text-zinc-300 transition-colors"
               title="Settings"
               aria-label="Open settings"
             >
@@ -926,7 +971,7 @@ export default function App() {
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-b-2 transition-all whitespace-nowrap ${
-                  active ? 'text-zinc-100' : 'text-zinc-500 border-transparent hover:text-zinc-300'
+                  active ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300'
                 }`}
                 style={active ? { borderColor: t.color } : {}}
               >
@@ -940,7 +985,7 @@ export default function App() {
 
       {error && (
         <div className="max-w-[1600px] mx-auto px-6 pt-4">
-          <div className="rounded border border-red-500/40 bg-red-950/20 px-4 py-2 text-xs text-red-300 flex items-center gap-2">
+          <div className="rounded border border-red-500/40 bg-red-50/20 dark:bg-red-950/20 px-4 py-2 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
             <AlertCircle size={14} /> Failed to load data.json: {error}
           </div>
         </div>
@@ -976,8 +1021,8 @@ export default function App() {
         )}
       </main>
 
-      <footer className="max-w-[1600px] mx-auto px-6 py-6 border-t border-zinc-900 mt-12">
-        <div className="text-[10px] text-zinc-600 font-mono">
+      <footer className="max-w-[1600px] mx-auto px-6 py-6 border-t border-zinc-100 dark:border-zinc-900 mt-12">
+        <div className="text-[10px] text-zinc-400 dark:text-zinc-600 font-mono">
           {tasks.length} tasks · {revenue.length} months · Synced from Notion via GitHub Actions
         </div>
       </footer>
