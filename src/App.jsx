@@ -805,7 +805,7 @@ export default function App() {
   const [tasks, setTasks] = useState([]);
   const [revenue, setRevenue] = useState([]);
   const [syncedAt, setSyncedAt] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(settings.landingTab || 'overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
