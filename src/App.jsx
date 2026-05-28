@@ -3,7 +3,7 @@ import {
   RefreshCw, AlertCircle, CheckCircle2, Clock, TrendingUp,
   Calendar as CalendarIcon, FlaskConical, Briefcase, Printer,
   ShoppingBag, Settings, Activity, ChevronRight, Flame, Zap,
-  Layers, Award, AlertTriangle, GitBranch, ExternalLink
+  Layers, Award, AlertTriangle, GitBranch, ExternalLink, X
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
@@ -166,10 +166,103 @@ const SectionTitle = ({ children, accent, href }) => {
 };
 
 // ============================================================================
+// TASK LIST MODAL — used by Calendar / Timeline when a slot has >1 task
+// ============================================================================
+
+const TaskListModal = ({ open, title, tasks, onClose }) => {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none">
+        <div
+          role="dialog"
+          aria-label={title}
+          className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg w-full max-w-md pointer-events-auto shadow-2xl flex flex-col"
+        >
+          <div className="px-5 py-4 border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500 font-mono">
+                {tasks.length} task{tasks.length === 1 ? '' : 's'}
+              </div>
+              <h3 className="font-display text-xl text-zinc-900 dark:text-zinc-100 leading-none mt-0.5">{title}</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded border border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-600 dark:text-zinc-400 transition-colors"
+              aria-label="Close"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+            {tasks.map((t, i) => {
+              const meta = AREA_META[t.area];
+              const href = taskUrl(t);
+              return (
+                <a
+                  key={i}
+                  href={href || '#'}
+                  target={href ? '_blank' : undefined}
+                  rel={href ? 'noopener noreferrer' : undefined}
+                  onClick={href ? undefined : (e) => e.preventDefault()}
+                  className={`block rounded border border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-100/40 dark:bg-zinc-900/40 px-3 py-2 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/80 dark:hover:bg-zinc-900/80 transition-colors ${href ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-xs text-zinc-800 dark:text-zinc-200 font-medium">{t.task}</div>
+                    {href && <ExternalLink size={11} className="text-zinc-400 dark:text-zinc-600 mt-0.5 flex-shrink-0" />}
+                  </div>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: meta?.color }}>
+                      {meta?.label || '—'}
+                    </span>
+                    {t.status && (
+                      <span className="text-[10px] font-mono" style={{ color: STATUS_META[t.status]?.color }}>
+                        {STATUS_META[t.status]?.label || t.status}
+                      </span>
+                    )}
+                    {t.timeEst != null && (
+                      <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-600">{t.timeEst}h</span>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Open the Notion page for a single task, or invoke the modal opener for many.
+const openTaskOrList = (tasks, title, openModal) => {
+  if (!tasks || !tasks.length) return;
+  if (tasks.length === 1) {
+    const u = taskUrl(tasks[0]);
+    if (u) window.open(u, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  if (openModal) openModal({ title, tasks });
+};
+
+// ============================================================================
 // CALENDAR
 // ============================================================================
 
-const CalendarView = ({ tasks, today }) => {
+const CalendarView = ({ tasks, today, openModal }) => {
   const renderMonth = (offset) => {
     const mStart = new Date(today.getFullYear(), today.getMonth() + offset, 1);
     const mEnd = new Date(today.getFullYear(), today.getMonth() + offset + 1, 0);
@@ -203,16 +296,22 @@ const CalendarView = ({ tasks, today }) => {
             const day = i + 1;
             const isToday = offset === 0 && day === today.getDate();
             const dayTasks = tbd[day] || [];
+            const cellDate = new Date(mStart.getFullYear(), mStart.getMonth(), day);
+            const label = cellDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+            const clickable = dayTasks.length > 0;
+            const handleClick = () => openTaskOrList(dayTasks, label, openModal);
+            const Tag = clickable ? 'button' : 'div';
             return (
-              <div
+              <Tag
                 key={day}
-                className={`aspect-square rounded border p-1 flex flex-col ${
+                {...(clickable ? { type: 'button', onClick: handleClick, title: label } : {})}
+                className={`aspect-square rounded border p-1 flex flex-col text-left ${
                   isToday
                     ? 'bg-amber-500/10 border-amber-500/40'
                     : dayTasks.length
                       ? 'bg-zinc-100/60 dark:bg-zinc-900/60 border-zinc-300/50 dark:border-zinc-700/50'
                       : 'bg-zinc-50/30 dark:bg-zinc-950/30 border-zinc-200/40 dark:border-zinc-800/40'
-                } hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors`}
+                } hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors ${clickable ? 'cursor-pointer hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60' : 'cursor-default'}`}
               >
                 <div className={`text-[10px] font-mono ${isToday ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-zinc-500'}`}>
                   {day}
@@ -230,7 +329,7 @@ const CalendarView = ({ tasks, today }) => {
                     <div className="text-[8px] text-zinc-500 font-mono">+{dayTasks.length - 6}</div>
                   )}
                 </div>
-              </div>
+              </Tag>
             );
           })}
         </div>
@@ -250,7 +349,7 @@ const CalendarView = ({ tasks, today }) => {
 // TIMELINE
 // ============================================================================
 
-const TimelineView = ({ tasks, today }) => {
+const TimelineView = ({ tasks, today, openModal }) => {
   const weeks = useMemo(() => {
     const monday = new Date(today);
     monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
@@ -304,15 +403,19 @@ const TimelineView = ({ tasks, today }) => {
               {weeks.map(w => {
                 const wt = byArea[area].filter(t => t.weekIdx === w.idx);
                 if (!wt.length) return <div key={w.idx} className="h-6 rounded bg-zinc-50/30 dark:bg-zinc-950/30 border border-zinc-100 dark:border-zinc-900" />;
+                const label = `${meta.label} · week of ${formatDate(w.start)}`;
+                const handleClick = () => openTaskOrList(wt, label, openModal);
                 return (
-                  <div
+                  <button
                     key={w.idx}
-                    className="h-6 rounded border flex items-center justify-center text-[10px] font-mono font-semibold"
+                    type="button"
+                    onClick={handleClick}
+                    title={label + ' — ' + wt.map(t => t.task).join(', ')}
+                    className="h-6 rounded border flex items-center justify-center text-[10px] font-mono font-semibold cursor-pointer hover:opacity-80 transition-opacity"
                     style={{ background: meta.bg, borderColor: meta.border, color: meta.color }}
-                    title={wt.map(t => t.task).join('\n')}
                   >
                     {wt.length}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -798,7 +901,7 @@ const PriorityHoursChart = ({ tasks }) => {
 // TAB COMPONENTS
 // ============================================================================
 
-const OverviewTab = ({ tasks, revenue, today, fmt, density = 'comfortable' }) => {
+const OverviewTab = ({ tasks, revenue, today, fmt, density = 'comfortable', openModal }) => {
   const stats = useMemo(() => {
     const open = tasks.filter(t => t.status !== '✅ Done');
     const overdue = tasks.filter(t => isOverdue(t, today));
@@ -821,14 +924,14 @@ const OverviewTab = ({ tasks, revenue, today, fmt, density = 'comfortable' }) =>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Calendar — Next 2 Months</SectionTitle><CalendarView tasks={tasks} today={today} /></Card>
+          <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Calendar — Next 2 Months</SectionTitle><CalendarView tasks={tasks} today={today} openModal={openModal} /></Card>
         </div>
         <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={8} density={density} /></Card>
       </div>
 
       {density !== 'focus' && (
         <>
-          <Card><SectionTitle href={NOTION_TASKS_DB_URL}>12-Week Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
+          <Card><SectionTitle href={NOTION_TASKS_DB_URL}>12-Week Timeline</SectionTitle><TimelineView tasks={tasks} today={today} openModal={openModal} /></Card>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Status Mix</SectionTitle><StatusDonut tasks={tasks} /></Card>
@@ -847,7 +950,7 @@ const OverviewTab = ({ tasks, revenue, today, fmt, density = 'comfortable' }) =>
   );
 };
 
-const ProjectTab = ({ area, tasks, today, insights, density = 'comfortable' }) => {
+const ProjectTab = ({ area, tasks, today, insights, density = 'comfortable', openModal }) => {
   const meta = AREA_META[area];
 
   const stats = useMemo(() => {
@@ -883,14 +986,14 @@ const ProjectTab = ({ area, tasks, today, insights, density = 'comfortable' }) =
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Calendar</SectionTitle><CalendarView tasks={tasks} today={today} /></Card>
+          <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Calendar</SectionTitle><CalendarView tasks={tasks} today={today} openModal={openModal} /></Card>
         </div>
         <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={10} density={density} /></Card>
       </div>
 
       {density !== 'focus' && (
         <>
-          <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
+          <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Timeline</SectionTitle><TimelineView tasks={tasks} today={today} openModal={openModal} /></Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Status Distribution</SectionTitle><StatusDonut tasks={tasks} /></Card>
@@ -915,6 +1018,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [modal, setModal] = useState(null); // { title, tasks } — for the calendar/timeline task popup
 
   const today = useMemo(() => new Date(), []);
 
@@ -1049,25 +1153,25 @@ export default function App() {
       )}
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        {activeTab === 'overview' && <OverviewTab tasks={visibleTasks} revenue={revenue} today={today} fmt={fmt} density={settings.density} />}
+        {activeTab === 'overview' && <OverviewTab tasks={visibleTasks} revenue={revenue} today={today} fmt={fmt} density={settings.density} openModal={setModal} />}
         {activeTab === '🔬 PhD' && (
-          <ProjectTab area="🔬 PhD" tasks={filterArea('🔬 PhD')} today={today} density={settings.density}
+          <ProjectTab area="🔬 PhD" tasks={filterArea('🔬 PhD')} today={today} density={settings.density} openModal={setModal}
             insights={<PhdInsights tasks={filterArea('🔬 PhD')} today={today} />} />
         )}
         {activeTab === '💼 P1 Freelance' && (
-          <ProjectTab area="💼 P1 Freelance" tasks={filterArea('💼 P1 Freelance')} today={today} density={settings.density}
+          <ProjectTab area="💼 P1 Freelance" tasks={filterArea('💼 P1 Freelance')} today={today} density={settings.density} openModal={setModal}
             insights={<FreelanceInsights tasks={filterArea('💼 P1 Freelance')} revenue={revenue} fmt={fmt} />} />
         )}
         {activeTab === '🖨️ P2 STL' && (
-          <ProjectTab area="🖨️ P2 STL" tasks={filterArea('🖨️ P2 STL')} today={today} density={settings.density}
+          <ProjectTab area="🖨️ P2 STL" tasks={filterArea('🖨️ P2 STL')} today={today} density={settings.density} openModal={setModal}
             insights={<StlInsights tasks={filterArea('🖨️ P2 STL')} revenue={revenue} fmt={fmt} />} />
         )}
         {activeTab === '🛍️ P3 POD' && (
-          <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today} density={settings.density}
+          <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today} density={settings.density} openModal={setModal}
             insights={<PodInsights tasks={filterArea('🛍️ P3 POD')} revenue={revenue} />} />
         )}
         {activeTab === '⚙️ Admin' && (
-          <ProjectTab area="⚙️ Admin" tasks={filterArea('⚙️ Admin')} today={today} density={settings.density}
+          <ProjectTab area="⚙️ Admin" tasks={filterArea('⚙️ Admin')} today={today} density={settings.density} openModal={setModal}
             insights={<AdminInsights tasks={filterArea('⚙️ Admin')} />} />
         )}
       </main>
@@ -1084,6 +1188,13 @@ export default function App() {
         settings={settings}
         updateSetting={updateSetting}
         resetSettings={resetSettings}
+      />
+
+      <TaskListModal
+        open={!!modal}
+        title={modal?.title || ''}
+        tasks={modal?.tasks || []}
+        onClose={() => setModal(null)}
       />
     </div>
   );
