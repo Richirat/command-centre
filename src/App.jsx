@@ -393,7 +393,7 @@ const HoursChart = ({ tasks }) => {
   );
 };
 
-const RevenueChart = ({ revenue }) => {
+const RevenueChart = ({ revenue, fmt = (v) => `£${v}` }) => {
   const data = (revenue || []).map(r => ({
     month: r.month?.split(' ')[0].slice(0, 3) || '?',
     Target: r.target || 0,
@@ -409,8 +409,8 @@ const RevenueChart = ({ revenue }) => {
       <ComposedChart data={data} margin={{ top: 16, right: 8, bottom: 4, left: -8 }}>
         <CartesianGrid vertical={false} stroke="#27272a" />
         <XAxis dataKey="month" stroke="#71717a" fontSize={10} tickLine={false} />
-        <YAxis stroke="#52525b" fontSize={10} tickLine={false} tickFormatter={(v) => `£${v}`} />
-        <Tooltip contentStyle={{ background: '#0a0a0c', border: '1px solid #2a2a35', borderRadius: 6, fontSize: 11 }} cursor={{ fill: 'rgba(255,255,255,0.04)' }} formatter={(v) => [`£${v}`, '']} />
+        <YAxis stroke="#52525b" fontSize={10} tickLine={false} tickFormatter={(v) => fmt(v)} />
+        <Tooltip contentStyle={{ background: '#0a0a0c', border: '1px solid #2a2a35', borderRadius: 6, fontSize: 11 }} cursor={{ fill: 'rgba(255,255,255,0.04)' }} formatter={(v) => [fmt(v), '']} />
         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
         <Bar dataKey="Freelance" stackId="a" fill="#BB8FCE" />
         <Bar dataKey="STL"       stackId="a" fill="#F39C12" />
@@ -527,7 +527,7 @@ const PhdInsights = ({ tasks, today }) => {
   );
 };
 
-const FreelanceInsights = ({ tasks, revenue }) => {
+const FreelanceInsights = ({ tasks, revenue, fmt = (v) => `£${v}` }) => {
   const setupDone = tasks.filter(t => t.status === '✅ Done').length;
   const setupPct = tasks.length ? Math.round((setupDone / tasks.length) * 100) : 0;
   const totalRevenue = (revenue || []).reduce((a, r) => a + (r.freelance || 0), 0);
@@ -548,13 +548,13 @@ const FreelanceInsights = ({ tasks, revenue }) => {
         </div>
         <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
           <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Revenue Progress</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">£{totalRevenue}</div>
-          <div className="text-xs text-zinc-500 mt-1">of £1,500/mo target</div>
+          <div className="font-display text-4xl text-zinc-100 mt-2">{fmt(totalRevenue)}</div>
+          <div className="text-xs text-zinc-500 mt-1">of {fmt(1500)}/mo target</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">{totalProposals} proposals sent total</div>
         </div>
         <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
           <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Rate Targets</div>
-          <div className="font-display text-3xl text-zinc-100 mt-2">£55 → £85</div>
+          <div className="font-display text-3xl text-zinc-100 mt-2">{fmt(55)} → {fmt(85)}</div>
           <div className="text-xs text-zinc-500 mt-1">starting → target hourly</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Convert to retainers ASAP</div>
         </div>
@@ -563,12 +563,12 @@ const FreelanceInsights = ({ tasks, revenue }) => {
   );
 };
 
-const StlInsights = ({ tasks, revenue }) => {
+const StlInsights = ({ tasks, revenue, fmt = (v) => `£${v}` }) => {
   const setupDone = tasks.filter(t => t.status === '✅ Done').length;
   const setupPct = tasks.length ? Math.round((setupDone / tasks.length) * 100) : 0;
   const totalDesigns = (revenue || []).reduce((a, r) => a + (r.stlDesigns || 0), 0);
   const totalRev = (revenue || []).reduce((a, r) => a + (r.stl || 0), 0);
-  const revPerDesign = totalDesigns > 0 ? (totalRev / totalDesigns).toFixed(2) : '—';
+  const revPerDesign = totalDesigns > 0 ? totalRev / totalDesigns : null;
 
   return (
     <Card accent="#F39C12">
@@ -590,9 +590,9 @@ const StlInsights = ({ tasks, revenue }) => {
         </div>
         <div className="rounded border border-zinc-700 bg-zinc-900/40 p-4">
           <div className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold">Revenue Density</div>
-          <div className="font-display text-4xl text-zinc-100 mt-2">£{revPerDesign}</div>
+          <div className="font-display text-4xl text-zinc-100 mt-2">{revPerDesign != null ? fmt(revPerDesign) : '—'}</div>
           <div className="text-xs text-zinc-500 mt-1">per design (cumulative)</div>
-          <div className="text-[10px] text-zinc-500 mt-3 font-mono">Goal: £400/mo passive</div>
+          <div className="text-[10px] text-zinc-500 mt-3 font-mono">Goal: {fmt(400)}/mo passive</div>
         </div>
       </div>
     </Card>
@@ -700,7 +700,7 @@ const PriorityHoursChart = ({ tasks }) => {
 // TAB COMPONENTS
 // ============================================================================
 
-const OverviewTab = ({ tasks, revenue, today }) => {
+const OverviewTab = ({ tasks, revenue, today, fmt }) => {
   const stats = useMemo(() => {
     const open = tasks.filter(t => t.status !== '✅ Done');
     const overdue = tasks.filter(t => isOverdue(t, today));
@@ -738,7 +738,7 @@ const OverviewTab = ({ tasks, revenue, today }) => {
 
       <Card>
         <SectionTitle>Revenue Trajectory — June → October</SectionTitle>
-        <RevenueChart revenue={revenue} />
+        <RevenueChart revenue={revenue} fmt={fmt} />
         <div className="text-[10px] text-zinc-500 mt-2 italic">Dashed line = monthly target. Bars stack actuals by pillar.</div>
       </Card>
     </div>
@@ -850,6 +850,17 @@ export default function App() {
     [tasks, settings.hideCompleted]
   );
 
+  // Currency formatter — respects settings.currency + settings.numberLocale.
+  // Whole-pound (or equivalent) precision matches the original hardcoded UI.
+  const fmt = useMemo(() => {
+    const f = new Intl.NumberFormat(settings.numberLocale, {
+      style: 'currency',
+      currency: settings.currency,
+      maximumFractionDigits: 0,
+    });
+    return (v) => f.format(v || 0);
+  }, [settings.numberLocale, settings.currency]);
+
   const tabs = [
     { id: 'overview',        label: 'Overview',  icon: Layers,        color: '#e8e8f0' },
     { id: '🔬 PhD',          label: 'PhD',       icon: FlaskConical,  color: AREA_META['🔬 PhD'].color },
@@ -932,18 +943,18 @@ export default function App() {
       )}
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        {activeTab === 'overview' && <OverviewTab tasks={visibleTasks} revenue={revenue} today={today} />}
+        {activeTab === 'overview' && <OverviewTab tasks={visibleTasks} revenue={revenue} today={today} fmt={fmt} />}
         {activeTab === '🔬 PhD' && (
           <ProjectTab area="🔬 PhD" tasks={filterArea('🔬 PhD')} today={today}
             insights={<PhdInsights tasks={filterArea('🔬 PhD')} today={today} />} />
         )}
         {activeTab === '💼 P1 Freelance' && (
           <ProjectTab area="💼 P1 Freelance" tasks={filterArea('💼 P1 Freelance')} today={today}
-            insights={<FreelanceInsights tasks={filterArea('💼 P1 Freelance')} revenue={revenue} />} />
+            insights={<FreelanceInsights tasks={filterArea('💼 P1 Freelance')} revenue={revenue} fmt={fmt} />} />
         )}
         {activeTab === '🖨️ P2 STL' && (
           <ProjectTab area="🖨️ P2 STL" tasks={filterArea('🖨️ P2 STL')} today={today}
-            insights={<StlInsights tasks={filterArea('🖨️ P2 STL')} revenue={revenue} />} />
+            insights={<StlInsights tasks={filterArea('🖨️ P2 STL')} revenue={revenue} fmt={fmt} />} />
         )}
         {activeTab === '🛍️ P3 POD' && (
           <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today}
