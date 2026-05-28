@@ -78,6 +78,8 @@ async function fetchAllPages(databaseId) {
 
 function transformTask(page) {
   return {
+    id:       page.id,
+    url:      page.url,
     task:     getTitle(page, 'Task'),
     area:     getSelect(page, 'Area'),
     status:   getSelect(page, 'Status'),
