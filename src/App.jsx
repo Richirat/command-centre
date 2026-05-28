@@ -3,7 +3,7 @@ import {
   RefreshCw, AlertCircle, CheckCircle2, Clock, TrendingUp,
   Calendar as CalendarIcon, FlaskConical, Briefcase, Printer,
   ShoppingBag, Settings, Activity, ChevronRight, Flame, Zap,
-  Layers, Award, AlertTriangle, GitBranch
+  Layers, Award, AlertTriangle, GitBranch, ExternalLink
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
@@ -40,6 +40,20 @@ const PRIORITY_META = {
 // Fixed reference dates (update if your viva date changes)
 const VIVA_DATE = new Date('2026-11-15');
 const BUILD_DEADLINE = new Date('2026-06-01');
+
+// Static Notion database URLs (for 'view all' deep-links on section titles).
+const NOTION_TASKS_DB_URL   = 'https://www.notion.so/83823c89bdca432fa824ed3bc5c7612d';
+const NOTION_REVENUE_DB_URL = 'https://www.notion.so/37315e4eaa5649ffb2fd7f6a8ad3d61f';
+
+// Resolve a Notion page URL for a task row.
+// Prefer the canonical url field written by fetch-notion.js; fall back to a
+// constructed URL from the id (Notion uses the bare hex id, no dashes).
+const taskUrl = (t) => {
+  if (!t) return null;
+  if (t.url) return t.url;
+  if (t.id) return `https://www.notion.so/${String(t.id).replace(/-/g, '')}`;
+  return null;
+};
 
 // ============================================================================
 // HELPERS
@@ -115,13 +129,41 @@ const KPICard = ({ label, value, sub, icon: Icon, accent = 'var(--accent)' }) =>
   </Card>
 );
 
-const SectionTitle = ({ children, accent }) => (
-  <div className="flex items-baseline gap-3 mb-4">
-    <div className="h-px flex-shrink-0 w-6" style={{ background: accent || '#52525b' }} />
-    <h3 className="text-[11px] uppercase tracking-[0.22em] text-zinc-600 dark:text-zinc-400 font-semibold">{children}</h3>
-    <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-  </div>
-);
+const SectionTitle = ({ children, accent, href }) => {
+  const dash = <div className="h-px flex-shrink-0 w-6" style={{ background: accent || '#52525b' }} />;
+  const label = (
+    <h3 className="text-[11px] uppercase tracking-[0.22em] text-zinc-600 dark:text-zinc-400 font-semibold">
+      {children}
+    </h3>
+  );
+  const rule = <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />;
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group flex items-baseline gap-3 mb-4 cursor-pointer"
+        title="Open in Notion"
+      >
+        {dash}
+        {label}
+        <ExternalLink
+          size={10}
+          className="text-zinc-400 dark:text-zinc-600 opacity-50 group-hover:opacity-100 transition-opacity"
+        />
+        {rule}
+      </a>
+    );
+  }
+  return (
+    <div className="flex items-baseline gap-3 mb-4">
+      {dash}
+      {label}
+      {rule}
+    </div>
+  );
+};
 
 // ============================================================================
 // CALENDAR
@@ -312,10 +354,16 @@ const PriorityList = ({ tasks, today, limit = 10, density = 'comfortable' }) => 
         const meta = AREA_META[t.area];
         const overdue = isOverdue(t, today);
         const days = t.dueDate ? daysBetween(today, new Date(t.dueDate)) : null;
+        const href = taskUrl(t);
+        const Row = href ? 'a' : 'div';
+        const rowProps = href
+          ? { href, target: '_blank', rel: 'noopener noreferrer', title: 'Open in Notion' }
+          : {};
         return (
-          <div
+          <Row
             key={i}
-            className={`flex items-center gap-3 rounded-md border border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-50/40 dark:bg-zinc-950/40 ${compact ? 'px-2 py-1' : 'px-3 py-2'} hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors`}
+            {...rowProps}
+            className={`flex items-center gap-3 rounded-md border border-zinc-200/60 dark:border-zinc-800/60 bg-zinc-50/40 dark:bg-zinc-950/40 ${compact ? 'px-2 py-1' : 'px-3 py-2'} hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors ${href ? 'cursor-pointer hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60' : ''}`}
           >
             <div className={`w-1 ${compact ? 'h-6' : 'h-8'} rounded`} style={{ background: PRIORITY_META[t.priority]?.color || '#666' }} />
             <div className="flex-1 min-w-0">
@@ -334,8 +382,11 @@ const PriorityList = ({ tasks, today, limit = 10, density = 'comfortable' }) => 
                 )}
               </div>
             </div>
-            <ChevronRight size={14} className="text-zinc-300 dark:text-zinc-700" />
-          </div>
+            {href
+              ? <ExternalLink size={12} className="text-zinc-300 dark:text-zinc-700" />
+              : <ChevronRight size={14} className="text-zinc-300 dark:text-zinc-700" />
+            }
+          </Row>
         );
       })}
     </div>
@@ -770,23 +821,23 @@ const OverviewTab = ({ tasks, revenue, today, fmt, density = 'comfortable' }) =>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card><SectionTitle>Calendar — Next 2 Months</SectionTitle><CalendarView tasks={tasks} today={today} /></Card>
+          <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Calendar — Next 2 Months</SectionTitle><CalendarView tasks={tasks} today={today} /></Card>
         </div>
-        <Card><SectionTitle>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={8} density={density} /></Card>
+        <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={8} density={density} /></Card>
       </div>
 
       {density !== 'focus' && (
         <>
-          <Card><SectionTitle>12-Week Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
+          <Card><SectionTitle href={NOTION_TASKS_DB_URL}>12-Week Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card><SectionTitle>Status Mix</SectionTitle><StatusDonut tasks={tasks} /></Card>
-            <Card><SectionTitle>Tasks by Area</SectionTitle><AreaBar tasks={tasks} /></Card>
-            <Card><SectionTitle>Open Hours by Area</SectionTitle><HoursChart tasks={tasks} /></Card>
+            <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Status Mix</SectionTitle><StatusDonut tasks={tasks} /></Card>
+            <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Tasks by Area</SectionTitle><AreaBar tasks={tasks} /></Card>
+            <Card><SectionTitle href={NOTION_TASKS_DB_URL}>Open Hours by Area</SectionTitle><HoursChart tasks={tasks} /></Card>
           </div>
 
           <Card>
-            <SectionTitle>Revenue Trajectory — June → October</SectionTitle>
+            <SectionTitle href={NOTION_REVENUE_DB_URL}>Revenue Trajectory — June → October</SectionTitle>
             <RevenueChart revenue={revenue} fmt={fmt} />
             <div className="text-[10px] text-zinc-500 mt-2 italic">Dashed line = monthly target. Bars stack actuals by pillar.</div>
           </Card>
@@ -832,18 +883,18 @@ const ProjectTab = ({ area, tasks, today, insights, density = 'comfortable' }) =
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card accent={meta.color}><SectionTitle accent={meta.color}>Calendar</SectionTitle><CalendarView tasks={tasks} today={today} /></Card>
+          <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Calendar</SectionTitle><CalendarView tasks={tasks} today={today} /></Card>
         </div>
-        <Card accent={meta.color}><SectionTitle accent={meta.color}>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={10} density={density} /></Card>
+        <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Priority Queue</SectionTitle><PriorityList tasks={tasks} today={today} limit={10} density={density} /></Card>
       </div>
 
       {density !== 'focus' && (
         <>
-          <Card accent={meta.color}><SectionTitle accent={meta.color}>Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
+          <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Timeline</SectionTitle><TimelineView tasks={tasks} today={today} /></Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card accent={meta.color}><SectionTitle accent={meta.color}>Status Distribution</SectionTitle><StatusDonut tasks={tasks} /></Card>
-            <Card accent={meta.color}><SectionTitle accent={meta.color}>Hours by Priority</SectionTitle><PriorityHoursChart tasks={tasks} /></Card>
+            <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Status Distribution</SectionTitle><StatusDonut tasks={tasks} /></Card>
+            <Card accent={meta.color}><SectionTitle accent={meta.color} href={NOTION_TASKS_DB_URL}>Hours by Priority</SectionTitle><PriorityHoursChart tasks={tasks} /></Card>
           </div>
         </>
       )}
