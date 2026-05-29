@@ -121,7 +121,7 @@ const Card = ({ children, className = '', accent }) => (
 const KPICard = ({ label, value, sub, icon: Icon, accent = 'var(--accent)' }) => (
   <Card>
     <div className="flex items-start justify-between mb-3">
-      <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-500 font-medium">{label}</span>
+      <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-300 font-bold">{label}</span>
       {Icon && <Icon size={14} style={{ color: accent }} />}
     </div>
     <div className="font-display text-4xl leading-none mb-1.5" style={{ color: accent }}>{value}</div>
@@ -132,7 +132,7 @@ const KPICard = ({ label, value, sub, icon: Icon, accent = 'var(--accent)' }) =>
 const SectionTitle = ({ children, accent, href }) => {
   const dash = <div className="h-px flex-shrink-0 w-6" style={{ background: accent || '#52525b' }} />;
   const label = (
-    <h3 className="text-[11px] uppercase tracking-[0.22em] text-zinc-600 dark:text-zinc-400 font-semibold">
+    <h3 className="text-[11px] uppercase tracking-[0.22em] text-zinc-800 dark:text-zinc-200 font-bold">
       {children}
     </h3>
   );
@@ -284,7 +284,7 @@ const CalendarView = ({ tasks, today, openModal }) => {
         </div>
         <div className="grid grid-cols-7 gap-1 mb-1">
           {['M','T','W','T','F','S','S'].map((d,i) => (
-            <div key={i} className="text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600 text-center py-1 font-medium">{d}</div>
+            <div key={i} className="text-[10px] uppercase tracking-widest text-zinc-700 dark:text-zinc-300 text-center py-1 font-bold">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">
@@ -310,7 +310,7 @@ const CalendarView = ({ tasks, today, openModal }) => {
                       : 'bg-zinc-50/30 dark:bg-zinc-950/30 border-zinc-200/40 dark:border-zinc-800/40'
                 } hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors ${clickable ? 'cursor-pointer hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60' : 'cursor-default'}`}
               >
-                <div className={`text-[10px] font-mono ${isToday ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-zinc-500'}`}>
+                <div className={`text-xs font-mono font-bold ${isToday ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
                   {day}
                 </div>
                 <div className="flex-1 flex flex-wrap gap-0.5 mt-1 content-start">
@@ -651,7 +651,7 @@ const PhdPhaseStrip = ({ today }) => {
                           'bg-zinc-50/30 dark:bg-zinc-950/30 border-zinc-200/40 dark:border-zinc-800/40 opacity-60'
             }`}
           >
-            <div className={`text-[9px] uppercase tracking-widest font-semibold ${isCurrent ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-500'}`}>
+            <div className={`text-[10px] uppercase tracking-widest font-bold ${isCurrent ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-600 dark:text-zinc-400'}`}>
               Phase {i + 1}
             </div>
             <div className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400'}`}>
@@ -688,7 +688,7 @@ const PhdInsights = ({ tasks, today }) => {
       <SectionTitle accent="#5DADE2">PhD Insights</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded border border-red-500/30 bg-red-50/20 dark:bg-red-950/20 p-4">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-red-600 dark:text-red-400 font-semibold">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-red-600 dark:text-red-400 font-bold">
             <Flame size={12} /> Build Deadline
           </div>
           <div className="font-display text-4xl text-red-700 dark:text-red-300 mt-2">{Math.max(0, daysToBuild)}d</div>
@@ -698,7 +698,7 @@ const PhdInsights = ({ tasks, today }) => {
           </div>
         </div>
         <div className="rounded border border-amber-500/30 bg-amber-50/20 dark:bg-amber-950/20 p-4">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-amber-600 dark:text-amber-400 font-semibold">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-amber-600 dark:text-amber-400 font-bold">
             <Award size={12} /> Viva
           </div>
           <div className="font-display text-4xl text-amber-700 dark:text-amber-300 mt-2">{daysToViva}d</div>
@@ -708,7 +708,7 @@ const PhdInsights = ({ tasks, today }) => {
           </div>
         </div>
         <div className="rounded border border-blue-500/30 bg-blue-50/20 dark:bg-blue-950/20 p-4">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 font-semibold">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 font-bold">
             <GitBranch size={12} /> Pipeline Backlog
           </div>
           <div className="text-xs text-zinc-700 dark:text-zinc-300 mt-3 space-y-1">
@@ -735,7 +735,7 @@ const FreelanceInsights = ({ tasks, revenue, fmt = (v) => `£${v}` }) => {
       <SectionTitle accent="#BB8FCE">Freelance Insights</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded border border-purple-500/30 bg-purple-50/20 dark:bg-purple-950/20 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-purple-700 dark:text-purple-300 font-semibold">Platform Launch</div>
+          <div className="text-[10px] uppercase tracking-widest text-purple-700 dark:text-purple-300 font-bold">Platform Launch</div>
           <div className="font-display text-4xl text-purple-800 dark:text-purple-200 mt-2">{setupPct}%</div>
           <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{setupDone}/{tasks.length} setup tasks done</div>
           <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
@@ -744,13 +744,13 @@ const FreelanceInsights = ({ tasks, revenue, fmt = (v) => `£${v}` }) => {
           <div className="text-[10px] text-zinc-500 mt-2 font-mono">Target: live by Jun 7</div>
         </div>
         <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Revenue Progress</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Revenue Progress</div>
           <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{fmt(totalRevenue)}</div>
           <div className="text-xs text-zinc-500 mt-1">of {fmt(1500)}/mo target</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">{totalProposals} proposals sent total</div>
         </div>
         <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Rate Targets</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Rate Targets</div>
           <div className="font-display text-3xl text-zinc-900 dark:text-zinc-100 mt-2">{fmt(55)} → {fmt(85)}</div>
           <div className="text-xs text-zinc-500 mt-1">starting → target hourly</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Convert to retainers ASAP</div>
@@ -772,7 +772,7 @@ const StlInsights = ({ tasks, revenue, fmt = (v) => `£${v}` }) => {
       <SectionTitle accent="#F39C12">STL Insights</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded border border-orange-500/30 bg-orange-50/20 dark:bg-orange-950/20 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-orange-700 dark:text-orange-300 font-semibold">Platform Setup</div>
+          <div className="text-[10px] uppercase tracking-widest text-orange-700 dark:text-orange-300 font-bold">Platform Setup</div>
           <div className="font-display text-4xl text-orange-800 dark:text-orange-200 mt-2">{setupPct}%</div>
           <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">Cults3D · MyMiniFactory</div>
           <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
@@ -780,13 +780,13 @@ const StlInsights = ({ tasks, revenue, fmt = (v) => `£${v}` }) => {
           </div>
         </div>
         <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Catalogue</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Catalogue</div>
           <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{totalDesigns}</div>
           <div className="text-xs text-zinc-500 mt-1">designs published</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Target: 2–3 / week</div>
         </div>
         <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Revenue Density</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Revenue Density</div>
           <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{revPerDesign != null ? fmt(revPerDesign) : '—'}</div>
           <div className="text-xs text-zinc-500 mt-1">per design (cumulative)</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Goal: {fmt(400)}/mo passive</div>
@@ -806,7 +806,7 @@ const PodInsights = ({ tasks, revenue }) => {
       <SectionTitle accent="#EC7063">POD Insights</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded border border-rose-500/30 bg-rose-50/20 dark:bg-rose-950/20 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-rose-700 dark:text-rose-300 font-semibold">Platform Setup</div>
+          <div className="text-[10px] uppercase tracking-widest text-rose-700 dark:text-rose-300 font-bold">Platform Setup</div>
           <div className="font-display text-4xl text-rose-800 dark:text-rose-200 mt-2">{setupPct}%</div>
           <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">Etsy · Printify · EverBee</div>
           <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
@@ -814,13 +814,13 @@ const PodInsights = ({ tasks, revenue }) => {
           </div>
         </div>
         <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Listings</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Listings</div>
           <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{totalListings}</div>
           <div className="text-xs text-zinc-500 mt-1">live on Etsy</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Target: 3–5 / week</div>
         </div>
         <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Niche Priority</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Niche Priority</div>
           <div className="font-display text-xl text-zinc-900 dark:text-zinc-100 mt-2">Lab humour</div>
           <div className="text-xs text-zinc-500 mt-1">highest conversion first</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Then sci art → geometric</div>
@@ -839,7 +839,7 @@ const AdminInsights = ({ tasks }) => {
       <SectionTitle accent="#95A5A6">Compliance & Tooling</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded border border-zinc-400 dark:border-zinc-600 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Compliance</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Compliance</div>
           <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">{setupPct}%</div>
           <div className="text-xs text-zinc-500 mt-1">HMRC · tax account · Wave</div>
           <div className="h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
@@ -847,13 +847,13 @@ const AdminInsights = ({ tasks }) => {
           </div>
         </div>
         <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Tax Buffer</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Tax Buffer</div>
           <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">25%</div>
           <div className="text-xs text-zinc-500 mt-1">of freelance income</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Set aside from day 1</div>
         </div>
         <div className="rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100/40 dark:bg-zinc-900/40 p-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-semibold">Friday Review</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-800 dark:text-zinc-200 font-bold">Friday Review</div>
           <div className="font-display text-4xl text-zinc-900 dark:text-zinc-100 mt-2">30m</div>
           <div className="text-xs text-zinc-500 mt-1">weekly admin time</div>
           <div className="text-[10px] text-zinc-500 mt-3 font-mono">Invoicing · Toggl · summary</div>
@@ -1164,35 +1164,4 @@ export default function App() {
             insights={<StlInsights tasks={filterArea('🖨️ P2 STL')} revenue={revenue} fmt={fmt} />} />
         )}
         {activeTab === '🛍️ P3 POD' && (
-          <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today} density={settings.density} openModal={setModal}
-            insights={<PodInsights tasks={filterArea('🛍️ P3 POD')} revenue={revenue} />} />
-        )}
-        {activeTab === '⚙️ Admin' && (
-          <ProjectTab area="⚙️ Admin" tasks={filterArea('⚙️ Admin')} today={today} density={settings.density} openModal={setModal}
-            insights={<AdminInsights tasks={filterArea('⚙️ Admin')} />} />
-        )}
-      </main>
-
-      <footer className="max-w-[1600px] mx-auto px-6 py-6 border-t border-zinc-100 dark:border-zinc-900 mt-12">
-        <div className="text-[10px] text-zinc-400 dark:text-zinc-600 font-mono">
-          {tasks.length} tasks · {revenue.length} months · Synced from Notion via GitHub Actions
-        </div>
-      </footer>
-
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        settings={settings}
-        updateSetting={updateSetting}
-        resetSettings={resetSettings}
-      />
-
-      <TaskListModal
-        open={!!modal}
-        title={modal?.title || ''}
-        tasks={modal?.tasks || []}
-        onClose={() => setModal(null)}
-      />
-    </div>
-  );
-}
+          <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today} density={settings.density} openModal={setModa
