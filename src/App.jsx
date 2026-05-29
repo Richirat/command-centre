@@ -247,14 +247,11 @@ const TaskListModal = ({ open, title, tasks, onClose }) => {
   );
 };
 
-// Open the Notion page for a single task, or invoke the modal opener for many.
+// Open the task-list modal at every Calendar / Timeline slot, regardless of
+// count. The user reaches Notion via the modal row, never directly from the
+// cell.
 const openTaskOrList = (tasks, title, openModal) => {
   if (!tasks || !tasks.length) return;
-  if (tasks.length === 1) {
-    const u = taskUrl(tasks[0]);
-    if (u) window.open(u, '_blank', 'noopener,noreferrer');
-    return;
-  }
   if (openModal) openModal({ title, tasks });
 };
 
