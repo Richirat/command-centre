@@ -1164,4 +1164,35 @@ export default function App() {
             insights={<StlInsights tasks={filterArea('🖨️ P2 STL')} revenue={revenue} fmt={fmt} />} />
         )}
         {activeTab === '🛍️ P3 POD' && (
-          <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today} density={settings.density} openModal={setModa
+          <ProjectTab area="🛍️ P3 POD" tasks={filterArea('🛍️ P3 POD')} today={today} density={settings.density} openModal={setModal}
+            insights={<PodInsights tasks={filterArea('🛍️ P3 POD')} revenue={revenue} fmt={fmt} />} />
+        )}
+        {activeTab === '⚙️ Admin' && (
+          <ProjectTab area="⚙️ Admin" tasks={filterArea('⚙️ Admin')} today={today} density={settings.density} openModal={setModal}
+            insights={<AdminInsights tasks={filterArea('⚙️ Admin')} />} />
+        )}
+      </main>
+
+      <footer className="max-w-[1600px] mx-auto px-6 py-6 border-t border-zinc-100 dark:border-zinc-900 mt-12">
+        <div className="text-[10px] text-zinc-400 dark:text-zinc-600 font-mono">
+          {tasks.length} tasks · {revenue.length} months · Synced from Notion via GitHub Actions
+        </div>
+      </footer>
+
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        updateSetting={updateSetting}
+        resetSettings={resetSettings}
+      />
+
+      <TaskListModal
+        open={!!modal}
+        title={modal?.title || ''}
+        tasks={modal?.tasks || []}
+        onClose={() => setModal(null)}
+      />
+    </div>
+  );
+}
