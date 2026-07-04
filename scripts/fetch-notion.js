@@ -253,6 +253,19 @@ function buildEvent(page, dtstamp) {
   if (url) lines.push(`URL:${icsEscapeText(url)}`);
   if (area) lines.push(`CATEGORIES:${icsEscapeText(area)}`);
 
+  // Reminders baked into the feed, because a subscribed (read-only) calendar
+  // cannot take manually added per-event alerts. All-day tasks fire at 09:00 the
+  // day before (-PT15H from the midnight start) and 09:00 on the day (PT9H).
+  // Timed tasks fall back to 1 day before and 15 minutes before the start.
+  const alarmTriggers = isTimed ? ['-P1D', '-PT15M'] : ['-PT15H', 'PT9H'];
+  for (const trigger of alarmTriggers) {
+    lines.push('BEGIN:VALARM');
+    lines.push('ACTION:DISPLAY');
+    lines.push(`DESCRIPTION:${icsEscapeText(title)}`);
+    lines.push(`TRIGGER:${trigger}`);
+    lines.push('END:VALARM');
+  }
+
   lines.push('END:VEVENT');
   return lines;
 }
